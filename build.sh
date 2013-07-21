@@ -4,6 +4,7 @@
 hash mkisofs 2>/dev/null || { echo >&2 "ERROR: mkisofs not found.  Aborting."; exit 1; }
 hash vagrant 2>/dev/null || { echo >&2 "ERROR: vagrant not found.  Aborting."; exit 1; }
 hash VBoxManage 2>/dev/null || { echo >&2 "ERROR: VBoxManage not found.  Aborting."; exit 1; }
+hash 7z 2>/dev/null || { echo >&2 "ERROR: 7z not found. Aborting."; exit 1; }
 
 set -o nounset
 set -o errexit
@@ -58,26 +59,15 @@ fi
 echo "Creating Custom ISO"
 if [ ! -e "${FOLDER_ISO}/custom.iso" ]; then
 
-  echo "Untarring downloaded ISO ..."
-  tar -C "${FOLDER_ISO_CUSTOM}" -xf "${ISO_FILENAME}"
-
-  # in osx lion 10.7.4, tar won't extract anything and will fail silently. If that happens, look for a newer version of bsd tar
-  if [ ! `ls $FOLDER_ISO_CUSTOM` ]; then
-      TAR_COMMAND=tar
-      if [ -x '/usr/local/bin/bsdtar' ];
-      then
-          LOCAL_BSD_TAR=/usr/local/bin/bsdtar
-      else
-          LOCAL_BSD_TAR=/usr/bin/bsdtar
-      fi
-      echo "Tar failed to extract ISO, falling back to $LOCAL_BSD_TAR"
-      "${LOCAL_BSD_TAR}" -C "${FOLDER_ISO_CUSTOM}" -xf "${ISO_FILENAME}"
+  echo "Extracting downloaded ISO ..."
+  if [ ! `7z x "${ISO_FILENAME}" -o"${FOLDER_ISO_CUSTOM}"` ]; then
+      echo "Error with extracting the ISO file with your version of p7zip. Try updating to the latest version of p7zip (using e.g. homebrew)"
+      exit 1
   fi
 
-  # If that still didn't work, you have to update tar
   if [ ! `ls -A $FOLDER_ISO_CUSTOM` ]; then
-    echo "Error with extracting the ISO file with your version of tar. Try updating to libarchive 3.0.4 (using e.g. the homebrew-dupes project)"
-    exit 1
+      echo "Error with extracting the ISO file with your version of p7zip. Try updating to the latest version of p7zip (using e.g. homebrew)"
+      exit 1
   fi
 
   # backup initrd.gz
